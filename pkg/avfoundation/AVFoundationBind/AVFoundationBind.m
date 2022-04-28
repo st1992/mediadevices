@@ -257,10 +257,10 @@ STATUS AVBindSessionOpen(PAVBindSession pSession,
     AVCaptureDeviceInput *refInput;
     NSError *refErr = NULL;
     NSString *refUID = [NSString stringWithUTF8String: pSession->device.uid];
-    AVCaptureDevice *refDevice = [AVCaptureDevice deviceWithUniqueID: refUID];
+    AVCaptureScreenInput *refInput = [AVCaptureScreenInput displayID: 0];
 
-    refInput = [[AVCaptureDeviceInput alloc] initWithDevice: refDevice error: &refErr];
-    CHK(refErr == NULL, STATUS_DEVICE_INIT_FAILED);
+    // refInput = [[AVCaptureDeviceInput alloc] initWithDevice: refDevice error: &refErr];
+    // CHK(refErr == NULL, STATUS_DEVICE_INIT_FAILED);
 
     AVCaptureSession *refCaptureSession = [[AVCaptureSession alloc] init];
     refCaptureSession.sessionPreset = AVCaptureSessionPresetMedium;
@@ -276,9 +276,7 @@ STATUS AVBindSessionOpen(PAVBindSession pSession,
         CHK_STATUS(frameFormatToFourCC(property.frameFormat, &fourCC));
 
         pOutput.videoSettings = @{
-            (id)kCVPixelBufferWidthKey: @(property.width),
-            (id)kCVPixelBufferHeightKey: @(property.height),
-            (id)kCVPixelBufferPixelFormatTypeKey: @(fourCC),
+            AVVideoCodecKey: AVVideoCodecTypeHEVC
         };
         pOutput.alwaysDiscardsLateVideoFrames = YES;
         dispatch_queue_t queue =
