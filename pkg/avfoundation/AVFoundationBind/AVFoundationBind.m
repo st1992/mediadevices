@@ -253,12 +253,10 @@ STATUS AVBindSessionOpen(PAVBindSession pSession,
     STATUS retStatus = STATUS_OK;
     NSAutoreleasePool *refPool = [[NSAutoreleasePool alloc] init];
     CHK(pSession != NULL && dataCallback != NULL, STATUS_NULL_ARG);
-
-    AVCaptureDeviceInput *refInput;
+    AVCaptureScreenInput *refInput;
     NSError *refErr = NULL;
     NSString *refUID = [NSString stringWithUTF8String: pSession->device.uid];
-    AVCaptureScreenInput *refInput = [AVCaptureScreenInput displayID: 0];
-
+    refInput = [[AVCaptureScreenInput alloc]initWithDisplayID:display];
     // refInput = [[AVCaptureDeviceInput alloc] initWithDevice: refDevice error: &refErr];
     // CHK(refErr == NULL, STATUS_DEVICE_INIT_FAILED);
 
@@ -266,26 +264,22 @@ STATUS AVBindSessionOpen(PAVBindSession pSession,
     refCaptureSession.sessionPreset = AVCaptureSessionPresetMedium;
     [refCaptureSession addInput: refInput];
 
-    if ([refDevice hasMediaType: AVMediaTypeVideo]) {
-        VideoDataDelegate *pDelegate = [[VideoDataDelegate alloc]
+    VideoDataDelegate *pDelegate = [[VideoDataDelegate alloc]
                                         init: dataCallback
                                         withUserData: pUserData];
 
-        AVCaptureVideoDataOutput *pOutput = [[AVCaptureVideoDataOutput alloc] init];
-        FourCharCode fourCC;
-        CHK_STATUS(frameFormatToFourCC(property.frameFormat, &fourCC));
+    AVCaptureVideoDataOutput *pOutput = [[AVCaptureVideoDataOutput alloc] init];
+    FourCharCode fourCC;
+    CHK_STATUS(frameFormatToFourCC(property.frameFormat, &fourCC));
 
-        pOutput.videoSettings = @{
-            AVVideoCodecKey: AVVideoCodecTypeHEVC
-        };
-        pOutput.alwaysDiscardsLateVideoFrames = YES;
-        dispatch_queue_t queue =
-            dispatch_queue_create("captureQueue", DISPATCH_QUEUE_SERIAL);
-        [pOutput setSampleBufferDelegate:pDelegate queue:queue];
-        [refCaptureSession addOutput: pOutput];
-    } else {
-        // TODO: implement audio pipeline
-    }
+    pOutput.videoSettings = @{
+        AVVideoCodecKey: AVVideoCodecTypeHEVC
+    };
+    pOutput.alwaysDiscardsLateVideoFrames = YES;
+    dispatch_queue_t queue =
+        dispatch_queue_create("captureQueue", DISPATCH_QUEUE_SERIAL);
+    [pOutput setSampleBufferDelegate:pDelegate queue:queue];
+    [refCaptureSession addOutput: pOutput];
 
     pSession->refCaptureSession = [refCaptureSession retain];
     [refCaptureSession startRunning];
